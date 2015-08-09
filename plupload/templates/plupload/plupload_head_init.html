@@ -1,0 +1,35 @@
+{% load plupload_tags %}
+{# Loading plupload required libraries #}
+<!-- DJANGO PLUPLOAD -->
+<!-- Load django-plupload CSS -->
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}plupload/css/plupload.css" />
+<!-- Load Queue widget CSS and jQuery -->
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css"/>
+{# <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}plupload/js/jquery.plupload.queue/css/jquery.plupload.queue.css"/> #}
+{% if jquery_ui_css_url %}
+    <!-- Jquery UI CSS -->
+    <link rel="stylesheet" type="text/css" href="{{ jquery_ui_css_url }}"/>
+{% endif %}
+{% if jquery_url %}
+    <!-- Jquery -->
+    <script type="text/javascript">
+        if(typeof jQuery == 'undefined') {
+            document.write('<script type="text/javascript" src="{{ jquery_url }}"></'+'script>');
+        }
+    </script>
+{% endif %}
+{% if jquery_ui_url %}
+    <!-- Jquery UI -->
+    <script type="text/javascript">
+        if(typeof $.widget == 'undefined') {
+            document.write('<script type="text/javascript" src="{{ jquery_ui_url }}"></'+'script>');
+        }
+    </script>
+{% endif %}
+<!-- Third party script for BrowserPlus runtime (Google Gears included in Gears runtime now) -->
+<script type="text/javascript" src="http://bp.yahooapis.com/2.4.21/browserplus-min.js"></script>
+<!-- Load plupload and all it's runtimes and finally the jQuery UI queue widget -->
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/plupload.full.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
+{# <script type="text/javascript" src="{{ STATIC_URL }}plupload/js/jquery.plupload.queue/jquery.plupload.queue.min.js"></script> #}
+<!-- / DJANGO PLUPLOAD -->

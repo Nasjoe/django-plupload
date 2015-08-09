@@ -1,0 +1,10 @@
+{% load i18n %}
+xxxx
+<form enctype="multipart/form-data" action="{% url 'plupload' %}" method="post">
+    {% csrf_token %}
+    <div class="pluploader_div">
+        {{ form.file.errors }}{{ form.file }}
+    </div>
+    <input type="submit" value="{% trans "upload" %}" />
+</form>
+yyyyyyyyyy

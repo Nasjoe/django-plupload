@@ -1,0 +1,7 @@
+include LICENSE
+include README.rst
+recursive-include plupload/static *
+recursive-include plupload/templates *
+recursive-include plupload/templatetags *
+recursive-include plupload/locale *
+recursive-include plupload/docs *

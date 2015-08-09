@@ -1,0 +1,114 @@
+{% load i18n plupload_tags %}
+{# this draws the plupload js widget, the input field and related message boxes #}
+
+{# error message box #}
+<div class="pluploader_error" id="pluploader_error_{{ id }}">{{ error|default:'' }}</div>
+
+{# uploaded file box #}
+<div class="pluploader_msg" id="pluploader_msg_{{ id }}">
+    {% if not error %}
+        <a id="pluploader_uploaded_{{ id }}" href="{{ uploaded_url }}" target="_blank">
+            {% if show_thumbnail %}
+                <img id="pluploader_uploaded_{{ id }}" src="{{ uploaded_url }}" alt="{{ uploaded_filename }}"{% if thumbnail_style %} style="{{ thumbnail_style }}"{% endif %}/>
+            {% else %}
+                {{ uploaded_filename }}
+            {% endif %}
+        </a>
+        {% if uploaded_filename and show_remove %}
+            &nbsp;
+            <span style="font-weight: normal;" title="{% trans "save to remove" %}">{% trans "remove" %}</span>
+            <input type="checkbox" id="pluploader_remove_{{ id }}" title="{% trans "save to remove" %}" autocomplete="off"/> {# checkbox for removing an uploaded file #}
+            <script type="text/javascript">
+                // handle uploaded file removal checkbox
+                $(document).on("click", "#pluploader_remove_{{ id }}", function() {
+                    var current_value = "{{ uploaded_filename }}";
+                    if ($(this).is(':checked')) {
+                        $("#pluploader_uploaded_{{ id }}").css("text-decoration", "line-through");
+                        $("#{{ id }}").val("");
+                    } else {
+                        $("#pluploader_uploaded_{{ id }}").css("text-decoration", "none");
+                        $("#{{ id }}").val(current_value);
+                    }
+                });
+            </script>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% csrf_token %}
+{# input (for saving the uploaded file in the object's field) #}
+<input{{ final_attrs }}/>
+
+<noscript class="plupload_noscript">{% trans "Javascript is disabled. You have to enable Javascript on your browser in order to use Plupload!" %}</noscript>
+
+{# plupload widget #}
+<!-- resize_width: {{ resize_width }}, resize_height: {{ resize_height }}, resize_quality: {{ resize_quality }} -->
+<div class="pluploader_div" id="pluploader_div_{{ id }}">
+    {% trans "loading..." %}
+</div>
+
+{# plupload widget initialization #}
+<script type="text/javascript">
+    var csrf_token_{{ id }} = $("#pluploader_div_{{ id }}").closest('form').find('input[name=csrfmiddlewaretoken]').val(); // collecting CSRF token from the form, make sure there is one
+    if (typeof(csrf_token_{{ id }}) == 'undefined') csrf_token_{{ id }} = '';
+    if (typeof($.plupload == 'undefined')) $("#pluploader_div_{{ id }}").html('{% trans "Cannot initialize plupload, are you missing {&#37; plupload_head_init &#37;} in your template&apos;s &lt;head&gt;?" %}');
+    $("#pluploader_div_{{ id }}").plupload({
+        // General settings
+        runtimes: 'html5,html4', // using html only
+        url: '{% url "plupload" %}',
+        {% if max_file_size %}max_file_size: '{{ max_file_size }}',{% endif %} {# max_file_size is a string like 10mb or 100kb etc. #}
+        {% if chunk_size %}chunk_size: '{{ chunk_size }}mb',{% endif %}
+        unique_names: {% if unique_names %}true{% else %}false{% endif %},
+        multipart: true,
+        max_file_count: 1, // max number of files allowed in the upload queue
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrf_token_{{ id }}}, // settings the csrf_token for django
+        multipart_params: {'control_code': '{{ control_code }}', 'show_thumbnail': '{% if show_thumbnail %}1{% endif %}', 'upload_chmod': '{{ upload_chmod|default:"" }}'}, // extra params
+        {% if resize_widht or resize_height %}
+            resize: { width: {{ resize_width }}, height: {{ resize_height }}{% if resize_quality %}, quality: {{ resize_quality }}{% endif %} }, // to resize images on client side
+        {% endif %}
+        // Specify what files to browse for
+        {% if extensions %}
+            filters: [
+                {title: "Image files", extensions: "{% for e in extensions %}{{ e }}{% if not forloop.last %},{% endif %}{% endfor %}"}
+            ],
+        {% endif %}
+        // Flash settings
+        flash_swf_url : '{{ STATIC_URL }}plupload/js/plupload.flash.swf',
+        // Silverlight settings
+        silverlight_xap_url : '{{ STATIC_URL }}plupload/js/plupload.silverlight.xap',
+        buttons: { browse: true, {% if auto_start %}start: false, stop: false{% else %}start: true, stop: true{% endif %} }, // removing 'Start Upload' button in case AUTO_START setting is set to True
+        init: {
+            // Event handlers
+            FileUploaded: function(up, file, info) {
+                // Called when a file has finished uploading
+                // info ha response e status (solo quando la chiamata e' ajax, html5??), status e' un numero
+                // info.response contiene la risposta che viene da upload.py, una stringa json {"jsonrpc" : "2.0", "result" : ..., "id" : "id"}
+                $('#pluploader_msg_{{ id }}').html('');
+                $('#pluploader_error_{{ id }}').html('');
+                var uploaded_filename = file.name;
+                var resp = info.response // response from url indicated above
+                if (!info.status) { //non ajax (html4) responses, wrapped in <pre></pre> (?)
+                    var tmp = document.createElement("div");
+                    tmp.innerHTML = resp;
+                    resp = tmp.textContent||tmp.innerText;
+                }
+                var j = jQuery.parseJSON(resp);
+                if (j.result.msg) $('#pluploader_msg_{{ id }}').html(j.result.msg);
+                if (j.result.error) $('#pluploader_error_{{ id }}').html(j.result.error);
+                if (j.result.filename) uploaded_filename = j.result.filename;
+                if (file) $('#{{ id }}').val('{% if upload_to %}{{ upload_to }}/{% endif %}' + uploaded_filename); {# right slash removed from upload_to #}
+                up.removeFile(file); // removes file from upload queue
+            },
+            FilesAdded: function(up, files) {
+                // Called when files are added to queue
+                {% if auto_start %}
+                    $('#pluploader_msg_{{ id }}').html('<img src="{{ STATIC_URL }}plupload/img/loading_small.gif" alt="loading..."/>');
+                    up.start(); // auto upload start as soon as a file is added
+                {% endif %}
+            },
+            Error: function(up, args) {
+                // Called when a error has occured
+            }
+        }
+    });
+</script>

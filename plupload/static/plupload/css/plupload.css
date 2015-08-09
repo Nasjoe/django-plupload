@@ -1,0 +1,29 @@
+.pluploader_div {
+    clear: both;
+    padding: 5px;
+    background: rgba(180,180,180,0.2);
+}
+
+.pluploader_error {
+    clear: both;
+    line-height: 2em;
+    color: #900;
+    font-weight: bold;
+}
+
+.pluploader_msg {
+    clear: both;
+    padding: 0.3em 0;
+    line-height: 2em;
+    font-weight: bold;
+}
+
+.pluploader_msg a {
+    font-weight: normal;
+}
+
+.plupload_noscript {
+    line-height: 2em;
+    color: #900;
+    font-weight: bold;
+}
